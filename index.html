@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>업무 일정 관리</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background: #f2f4f6; font-family: sans-serif; padding: 20px; }
+        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .btn { background: #3182f6; color: white; width: 100%; padding: 12px; border-radius: 12px; font-weight: bold; border: none; cursor: pointer; }
+        input { width: 100%; padding: 10px; border: 1px solid #e5e8eb; border-radius: 8px; margin-bottom: 10px; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <div style="max-width: 500px; margin: auto;">
+        <h1 class="text-2xl font-bold mb-5">업무 일정 관리</h1>
+        <div class="card">
+            <input type="text" id="t" placeholder="업무명">
+            <input type="text" id="s" placeholder="세부항목 (쉼표구분)">
+            <input type="date" id="d">
+            <input type="text" id="p" placeholder="담당자">
+            <button class="btn" onclick="add()">등록하기</button>
+        </div>
+        <div id="list"></div>
+    </div>
+    <script>
+        let tasks = JSON.parse(localStorage.getItem('tasks') || '[]');
+        function add() {
+            const task = { id: Date.now(), title: document.getElementById('t').value, sub: document.getElementById('s').value, date: document.getElementById('d').value, partner: document.getElementById('p').value, done: false };
+            tasks.unshift(task); save(); render();
+        }
+        function save() { localStorage.setItem('tasks', JSON.stringify(tasks)); }
+        function render() {
+            document.getElementById('list').innerHTML = tasks.map(t => `
+                <div class="card" onclick="t.done=!t.done;save();render();" style="opacity: ${t.done ? 0.5 : 1}">
+                    <div style="color: #3182f6; font-size: 12px; font-weight: bold;">${t.done ? '완료' : '진행중'}</div>
+                    <div class="font-bold text-lg">${t.title}</div>
+                    <div class="text-sm text-gray-500">${t.sub}</div>
+                    <div class="text-xs text-gray-400 mt-2">📅 ${t.date} | 👤 ${t.partner}</div>
+                </div>
+            `).join('');
+        }
+        render();
+    </script>
+</body>
+</html>
