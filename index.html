@@ -2,47 +2,46 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Business Task Control Center</title>
+    <title>Advanced Task Control Center</title>
     <style>
-        body { margin: 0; padding: 20px; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background-color: #f2f4f6; color: #191f28; }
-        .app-container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; height: calc(100vh - 40px); }
+        :root { --toss-blue: #3182f6; --toss-red: #f04452; --toss-yellow: #ffb300; --toss-green: #2d7a2d; }
+        body { margin: 0; padding: 20px; font-family: 'Apple SD Gothic Neo', sans-serif; background-color: #f2f4f6; color: #191f28; overflow: hidden; }
+        .app-container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 24px; display: flex; flex-direction: column; height: calc(100vh - 40px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         
         /* 헤더 */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid #f2f4f6; shrink: 0; }
-        .nav-group { display: flex; align-items: center; gap: 15px; }
-        .nav-btn { background: #f2f4f6; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 18px; }
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid #f2f4f6; }
         .current-month { font-size: 22px; font-weight: bold; min-width: 150px; text-align: center; }
-        .btn-main { background: #3182f6; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        .btn-main { background: var(--toss-blue); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: bold; cursor: pointer; }
 
-        /* 캘린더 */
-        .calendar-section { flex: 1; overflow-y: auto; }
+        /* 캘린더 영역 (스크롤 제거 및 고정) */
+        .calendar-section { flex: 0 0 auto; overflow: hidden; }
         .day-labels { display: flex; background: #fafafa; border-bottom: 1px solid #eee; }
         .day-labels div { flex: 1; padding: 10px 0; text-align: center; font-weight: bold; font-size: 13px; color: #8b95a1; }
         .calendar-grid { display: flex; flex-wrap: wrap; }
-        .cell { width: calc(100% / 7); min-height: 100px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; }
-        .date-num { font-weight: bold; font-size: 13px; margin-bottom: 5px; display: block; }
-        .sun { color: #f04452; } .sat { color: #3182f6; }
-        .task-dot { background: #3182f6; color: white; font-size: 10px; padding: 2px 5px; border-radius: 4px; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cell { width: calc(100% / 7); height: 110px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; overflow: hidden; }
+        .date-num { font-weight: bold; font-size: 13px; margin-bottom: 4px; display: block; }
+        
+        /* 캘린더 내 업무 버튼 */
+        .task-node { background: #e8f3ff; color: var(--toss-blue); font-size: 10px; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; border: none; width: 100%; text-align: left; }
 
-        /* 하단 업무 리스트 */
-        .list-section { height: 350px; border-top: 2px solid #3182f6; background: #f9fafb; padding: 20px; overflow-y: auto; }
-        .task-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; border: 1px solid #e5e8eb; cursor: pointer; }
-        .task-card:hover { border-color: #3182f6; }
-        .todo-status-tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-right: 5px; font-weight: bold; }
-        
-        /* 모달 */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-box { background: white; padding: 30px; border-radius: 24px; width: 450px; max-height: 80vh; overflow-y: auto; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #e5e8eb; border-radius: 10px; box-sizing: border-box; }
-        .todo-input-row { display: flex; gap: 5px; margin-bottom: 5px; }
-        .btn-circle { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #3182f6; color: #3182f6; background: white; cursor: pointer; }
-        
-        /* 상태별 색상 */
-        .status-시작전 { background: #eee; color: #666; }
-        .status-검토 { background: #fff0d1; color: #b27b00; }
-        .status-보고 { background: #e8f3ff; color: #3182f6; }
-        .status-완료 { background: #e1f5e1; color: #2d7a2d; }
-        .status-보완 { background: #ffebee; color: #d32f2f; }
+        /* 하단 리스트 영역 */
+        .list-section { flex: 1; border-top: 2px solid var(--toss-blue); background: #f9fafb; padding: 20px; overflow-y: auto; }
+        .task-card { background: white; border-radius: 16px; padding: 18px; margin-bottom: 12px; border: 1px solid #e5e8eb; cursor: pointer; transition: 0.2s; }
+        .task-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+
+        /* 상태 버튼 스타일 */
+        .status-btn { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; color: white; border: none; }
+        .bg-red { background-color: var(--toss-red); }
+        .bg-yellow { background-color: var(--toss-yellow); }
+        .bg-green { background-color: var(--toss-green); }
+
+        /* 모달 및 To-do 드래그 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 30px; border-radius: 24px; width: 500px; max-height: 85vh; overflow-y: auto; }
+        .todo-item { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; background: #f9fafb; padding: 8px; border-radius: 10px; cursor: move; }
+        .todo-item.dragging { opacity: 0.5; background: #e8f3ff; }
+        input, select { padding: 10px; border: 1px solid #e5e8eb; border-radius: 8px; }
+        .btn-del { background: #ff4d4f; color: white; border: none; width: 24px; height: 24px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -50,16 +49,16 @@
 <div class="app-container">
     <div class="header">
         <div class="nav-group">
-            <button class="nav-btn" onclick="changeMonth(-1)">◀</button>
+            <button onclick="changeMonth(-1)" style="border:none; background:none; cursor:pointer;">◀</button>
             <div id="monthDisplay" class="current-month"></div>
-            <button class="nav-btn" onclick="changeMonth(1)">▶</button>
+            <button onclick="changeMonth(1)" style="border:none; background:none; cursor:pointer;">▶</button>
         </div>
         <button class="btn-main" onclick="showModal()">+ 업무 등록</button>
     </div>
 
     <div class="calendar-section">
         <div class="day-labels">
-            <div style="color: #f04452;">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div style="color: #3182f6;">토</div>
+            <div style="color:var(--toss-red)">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div style="color:var(--toss-blue)">토</div>
         </div>
         <div id="calendarBoard" class="calendar-grid"></div>
     </div>
@@ -70,142 +69,164 @@
     </div>
 </div>
 
-<div id="modal" class="modal">
+<div id="taskModal" class="modal">
     <div class="modal-box">
-        <h2 id="modalTitle">업무 등록</h2>
-        <input type="text" id="mainTitle" placeholder="업무명 (예: 하반기 전략 수립)">
-        <input type="date" id="targetDate">
-        <input type="text" id="partner" placeholder="협업 담당자">
-        
-        <div style="margin: 15px 0 10px; font-weight: bold;">세부 To-do 리스트 <button class="btn-circle" onclick="addTodoRow()">+</button></div>
-        <div id="todoContainer">
+        <h2 id="modalHeader">업무 편집</h2>
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            <input type="text" id="mTitle" placeholder="업무명">
+            <div style="display:flex; gap:10px;">
+                <input type="date" id="mDate" style="flex:1">
+                <input type="text" id="mPartner" placeholder="담당자" style="flex:1">
             </div>
+            
+            <div style="margin-top:15px; font-weight:bold; display:flex; justify-content:space-between;">
+                세부 To-do (드래그하여 순서 조정)
+                <button onclick="addTodoRow()" style="color:var(--toss-blue); border:none; background:none; cursor:pointer; font-weight:bold;">+ 항목추가</button>
+            </div>
+            <div id="todoListContainer"></div>
 
-        <button class="btn-main" style="width:100%; margin-top:20px; padding:15px;" onclick="saveTask()">업무 저장</button>
-        <button onclick="closeModal()" style="width:100%; background:none; border:none; color:#8b95a1; margin-top:10px; cursor:pointer;">닫기</button>
+            <button class="btn-main" style="margin-top:20px; padding:15px;" onclick="saveTask()">업무 정보 저장</button>
+            <button onclick="closeModal()" style="border:none; background:none; color:#8b95a1; margin-top:10px; cursor:pointer;">닫기</button>
+        </div>
     </div>
 </div>
 
 <script>
-    let tasks = JSON.parse(localStorage.getItem('bizManagerV1')) || [];
+    let tasks = JSON.parse(localStorage.getItem('bizTaskFinalV1')) || [];
     let viewYear = 2026, viewMonth = 1;
     let editingId = null;
 
-    function showModal(id = null) {
-        editingId = id;
-        const modal = document.getElementById('modal');
-        document.getElementById('todoContainer').innerHTML = '';
-        
-        if(id) {
-            const task = tasks.find(t => t.id === id);
-            document.getElementById('modalTitle').innerText = "업무 상세 및 수정";
-            document.getElementById('mainTitle').value = task.title;
-            document.getElementById('targetDate').value = task.date;
-            document.getElementById('partner').value = task.partner;
-            task.todos.forEach(todo => addTodoRow(todo.text, todo.status));
-        } else {
-            document.getElementById('modalTitle').innerText = "새 업무 등록";
-            document.getElementById('mainTitle').value = '';
-            document.getElementById('targetDate').value = '';
-            document.getElementById('partner').value = '';
-            addTodoRow();
-        }
-        modal.style.display = 'flex';
+    function getTaskStatus(todos) {
+        if (!todos || todos.length === 0) return { label: '시작 전', class: 'bg-red' };
+        if (todos[0].status === '시작전') return { label: '시작 전', class: 'bg-red' };
+        if (todos[todos.length - 1].status === '완료') return { label: '완료', class: 'bg-green' };
+        return { label: '진행 중', class: 'bg-yellow' };
     }
 
-    function closeModal() { document.getElementById('modal').style.display = 'none'; }
+    function showModal(id = null) {
+        editingId = id;
+        document.getElementById('taskModal').style.display = 'flex';
+        const container = document.getElementById('todoListContainer');
+        container.innerHTML = '';
+
+        if(id) {
+            const t = tasks.find(x => x.id === id);
+            document.getElementById('mTitle').value = t.title;
+            document.getElementById('mDate').value = t.date;
+            document.getElementById('mPartner').value = t.partner;
+            t.todos.forEach(todo => addTodoRow(todo.text, todo.status));
+        } else {
+            document.getElementById('mTitle').value = '';
+            document.getElementById('mDate').value = '';
+            document.getElementById('mPartner').value = '';
+            addTodoRow();
+        }
+    }
+
+    function closeModal() { document.getElementById('taskModal').style.display = 'none'; }
 
     function addTodoRow(text = '', status = '시작전') {
         const div = document.createElement('div');
-        div.className = 'todo-input-row';
+        div.className = 'todo-item';
+        div.draggable = true;
         div.innerHTML = `
-            <input type="text" class="todo-text" value="${text}" placeholder="할 일 입력" style="margin-bottom:0; flex:2">
-            <select class="todo-status" style="margin-bottom:0; flex:1">
-                <option ${status==='시작전'?'selected':''}>시작전</option>
-                <option ${status==='검토'?'selected':''}>검토</option>
-                <option ${status==='보고'?'selected':''}>보고</option>
-                <option ${status==='완료'?'selected':''}>완료</option>
-                <option ${status==='보완'?'selected':''}>보완</option>
+            <span style="color:#ccc">☰</span>
+            <input type="text" class="t-text" value="${text}" placeholder="할 일" style="flex:1">
+            <select class="t-status">
+                ${['시작전','검토','보고','완료','보완'].map(s => `<option ${s===status?'selected':''}>${s}</option>`).join('')}
             </select>
+            <button class="btn-del" onclick="this.parentElement.remove()">-</button>
         `;
-        document.getElementById('todoContainer').appendChild(div);
+        setupDragEvents(div);
+        document.getElementById('todoListContainer').appendChild(div);
+    }
+
+    function setupDragEvents(el) {
+        el.addEventListener('dragstart', () => el.classList.add('dragging'));
+        el.addEventListener('dragend', () => el.classList.add('dragging'));
+        const container = document.getElementById('todoListContainer');
+        container.addEventListener('dragover', e => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(container, e.clientY);
+            const dragging = document.querySelector('.dragging');
+            if (afterElement == null) container.appendChild(dragging);
+            else container.insertBefore(dragging, afterElement);
+        });
+    }
+
+    function getDragAfterElement(container, y) {
+        const elements = [...container.querySelectorAll('.todo-item:not(.dragging)')];
+        return elements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+            else return closest;
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     function saveTask() {
-        const title = document.getElementById('mainTitle').value;
-        const date = document.getElementById('targetDate').value;
-        const todoRows = document.querySelectorAll('.todo-input-row');
-        let todos = [];
-        todoRows.forEach(row => {
-            const text = row.querySelector('.todo-text').value;
-            const status = row.querySelector('.todo-status').value;
-            if(text) todos.push({ text, status });
-        });
+        const title = document.getElementById('mTitle').value;
+        const date = document.getElementById('mDate').value;
+        const todoNodes = document.querySelectorAll('.todo-item');
+        const todos = [...todoNodes].map(n => ({
+            text: n.querySelector('.t-text').value,
+            status: n.querySelector('.t-status').value
+        }));
 
-        if(!title || !date) return alert('업무명과 날짜를 확인하세요.');
+        if(!title || !date) return alert('필수값을 입력하세요.');
 
-        if(editingId) {
-            tasks = tasks.map(t => t.id === editingId ? { ...t, title, date, partner: document.getElementById('partner').value, todos } : t);
-        } else {
-            tasks.push({ id: Date.now(), title, date, partner: document.getElementById('partner').value, todos });
-        }
+        const newTask = { id: editingId || Date.now(), title, date, partner: document.getElementById('mPartner').value, todos };
+        if(editingId) tasks = tasks.map(t => t.id === editingId ? newTask : t);
+        else tasks.push(newTask);
 
-        localStorage.setItem('bizManagerV1', JSON.stringify(tasks));
+        localStorage.setItem('bizTaskFinalV1', JSON.stringify(tasks));
         closeModal();
         render();
     }
 
-    function changeMonth(delta) {
-        viewMonth += delta;
-        if(viewMonth < 0) { viewMonth = 11; viewYear--; }
-        else if(viewMonth > 11) { viewMonth = 0; viewYear++; }
-        render();
-    }
+    function changeMonth(d) { viewMonth += d; if(viewMonth<0){viewMonth=11;viewYear--;} else if(viewMonth>11){viewMonth=0;viewYear++;} render(); }
 
     function render() {
-        document.getElementById('monthDisplay').innerText = `${viewYear}년 ${viewMonth + 1}월`;
+        document.getElementById('monthDisplay').innerText = `${viewYear}년 ${viewMonth+1}월`;
         const board = document.getElementById('calendarBoard');
         board.innerHTML = '';
-
         const firstDay = new Date(viewYear, viewMonth, 1).getDay();
         const lastDate = new Date(viewYear, viewMonth + 1, 0).getDate();
 
         for(let i=0; i<firstDay; i++) board.innerHTML += '<div class="cell" style="background:#f9fafb"></div>';
-
         for(let d=1; d<=lastDate; d++) {
-            const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const dayTasks = tasks.filter(t => t.date === dateStr);
-            const dayOfWeek = new Date(viewYear, viewMonth, d).getDay();
-            const colorClass = dayOfWeek === 0 ? 'sun' : (dayOfWeek === 6 ? 'sat' : '');
-
+            const dStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const dayTasks = tasks.filter(t => t.date === dStr);
             board.innerHTML += `
                 <div class="cell">
-                    <span class="date-num ${colorClass}">${d}</span>
-                    ${dayTasks.map(t => `<div class="task-dot">${t.title}</div>`).join('')}
+                    <span class="date-num ${new Date(viewYear,viewMonth,d).getDay()===0?'sun':(new Date(viewYear,viewMonth,d).getDay()===6?'sat':'')}">${d}</span>
+                    ${dayTasks.map(t => `<button class="task-node" onclick="showModal(${t.id})">${t.title}</button>`).join('')}
                 </div>
             `;
         }
 
-        const listArea = document.getElementById('masterTaskList');
-        listArea.innerHTML = tasks.length === 0 ? '<p>등록된 업무가 없습니다.</p>' : '';
-        tasks.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(t => {
-            const card = document.createElement('div');
-            card.className = 'task-card';
-            card.onclick = () => showModal(t.id);
-            card.innerHTML = `
-                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                    <span style="font-weight:bold; color:#3182f6;">📅 ${t.date}</span>
-                    <span style="font-size:12px; color:#8b95a1;">👤 담당: ${t.partner || '나'}</span>
+        const list = document.getElementById('masterTaskList');
+        list.innerHTML = '';
+        tasks.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(t => {
+            const status = getTaskStatus(t.todos);
+            const div = document.createElement('div');
+            div.className = 'task-card';
+            div.onclick = () => showModal(t.id);
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <button class="status-btn ${status.class}">${status.label}</button>
+                        <span style="font-weight:bold; font-size:18px; margin-left:10px;">${t.title}</span>
+                    </div>
+                    <span style="color:#8b95a1; font-size:13px;">📅 기한: ${t.date} | 👤 담당: ${t.partner}</span>
                 </div>
-                <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">${t.title}</div>
-                <div style="display:flex; flex-wrap:wrap; gap:5px;">
-                    ${t.todos.map(todo => `<span class="todo-status-tag status-${todo.status}">${todo.status}: ${todo.text}</span>`).join('')}
+                <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+                    ${t.todos.map(o => `<span style="font-size:11px; padding:2px 8px; border-radius:5px; background:#eee;">${o.text} (${o.status})</span>`).join('')}
                 </div>
             `;
-            listArea.appendChild(card);
+            list.appendChild(div);
         });
     }
-
     render();
 </script>
 </body>
