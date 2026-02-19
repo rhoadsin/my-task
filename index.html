@@ -2,40 +2,47 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>2026-2030 Task Calendar</title>
+    <title>Business Task Control Center</title>
     <style>
-        body { margin: 0; padding: 20px; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background-color: #f2f4f6; }
-        .app-container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
+        body { margin: 0; padding: 20px; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background-color: #f2f4f6; color: #191f28; }
+        .app-container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; display: flex; flex-direction: column; height: calc(100vh - 40px); }
         
-        /* 헤더 스타일 보완 */
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 25px; border-bottom: 1px solid #f2f4f6; }
+        /* 헤더 */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; border-bottom: 1px solid #f2f4f6; shrink: 0; }
         .nav-group { display: flex; align-items: center; gap: 15px; }
-        .nav-btn { background: #f2f4f6; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 18px; color: #4e5968; transition: 0.2s; }
-        .nav-btn:hover:not(:disabled) { background: #e5e8eb; color: #191f28; }
-        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .current-month { font-size: 24px; font-weight: bold; color: #191f28; min-width: 160px; text-align: center; }
-        
-        .btn-add { background: #3182f6; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; }
-        
-        /* 캘린더 레이아웃 */
-        .calendar-wrapper { display: block; width: 100%; border-top: 1px solid #eee; }
+        .nav-btn { background: #f2f4f6; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 18px; }
+        .current-month { font-size: 22px; font-weight: bold; min-width: 150px; text-align: center; }
+        .btn-main { background: #3182f6; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+
+        /* 캘린더 */
+        .calendar-section { flex: 1; overflow-y: auto; }
         .day-labels { display: flex; background: #fafafa; border-bottom: 1px solid #eee; }
-        .day-labels div { flex: 1; padding: 12px 0; text-align: center; font-weight: bold; font-size: 14px; color: #8b95a1; }
-        
-        .calendar-grid { display: flex; flex-wrap: wrap; width: 100%; }
-        .cell { width: calc(100% / 7); min-height: 120px; box-sizing: border-box; border-right: 1px solid #eee; border-bottom: 1px solid #eee; padding: 10px; background: white; }
-        .cell:nth-child(7n) { border-right: none; }
-        
-        .date-num { font-weight: bold; font-size: 14px; margin-bottom: 8px; display: block; }
-        .cell:nth-child(7n+1) .date-num { color: #f04452; } /* 일요일 */
-        .cell:nth-child(7n) .date-num { color: #3182f6; }   /* 토요일 */
-        .other-month { background-color: #f9fafb; color: #ccc; }
+        .day-labels div { flex: 1; padding: 10px 0; text-align: center; font-weight: bold; font-size: 13px; color: #8b95a1; }
+        .calendar-grid { display: flex; flex-wrap: wrap; }
+        .cell { width: calc(100% / 7); min-height: 100px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; }
+        .date-num { font-weight: bold; font-size: 13px; margin-bottom: 5px; display: block; }
+        .sun { color: #f04452; } .sat { color: #3182f6; }
+        .task-dot { background: #3182f6; color: white; font-size: 10px; padding: 2px 5px; border-radius: 4px; margin-bottom: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        .task-badge { background: #e8f3ff; color: #3182f6; font-size: 11px; padding: 4px 8px; border-radius: 6px; margin-bottom: 4px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 3px solid #3182f6; }
-
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; justify-content: center; align-items: center; }
-        .modal-box { background: white; padding: 30px; border-radius: 24px; width: 90%; max-width: 400px; }
-        input { width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid #e5e8eb; border-radius: 12px; box-sizing: border-box; font-size: 15px; }
+        /* 하단 업무 리스트 */
+        .list-section { height: 350px; border-top: 2px solid #3182f6; background: #f9fafb; padding: 20px; overflow-y: auto; }
+        .task-card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; border: 1px solid #e5e8eb; cursor: pointer; }
+        .task-card:hover { border-color: #3182f6; }
+        .todo-status-tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; margin-right: 5px; font-weight: bold; }
+        
+        /* 모달 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 30px; border-radius: 24px; width: 450px; max-height: 80vh; overflow-y: auto; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #e5e8eb; border-radius: 10px; box-sizing: border-box; }
+        .todo-input-row { display: flex; gap: 5px; margin-bottom: 5px; }
+        .btn-circle { width: 30px; height: 30px; border-radius: 50%; border: 1px solid #3182f6; color: #3182f6; background: white; cursor: pointer; }
+        
+        /* 상태별 색상 */
+        .status-시작전 { background: #eee; color: #666; }
+        .status-검토 { background: #fff0d1; color: #b27b00; }
+        .status-보고 { background: #e8f3ff; color: #3182f6; }
+        .status-완료 { background: #e1f5e1; color: #2d7a2d; }
+        .status-보완 { background: #ffebee; color: #d32f2f; }
     </style>
 </head>
 <body>
@@ -43,98 +50,160 @@
 <div class="app-container">
     <div class="header">
         <div class="nav-group">
-            <button id="prevBtn" class="nav-btn" onclick="changeMonth(-1)">◀</button>
-            <div id="monthDisplay" class="current-month">2026년 2월</div>
-            <button id="nextBtn" class="nav-btn" onclick="changeMonth(1)">▶</button>
+            <button class="nav-btn" onclick="changeMonth(-1)">◀</button>
+            <div id="monthDisplay" class="current-month"></div>
+            <button class="nav-btn" onclick="changeMonth(1)">▶</button>
         </div>
-        <button class="btn-add" onclick="openModal()">+ 일정 추가</button>
+        <button class="btn-main" onclick="showModal()">+ 업무 등록</button>
     </div>
 
-    <div class="calendar-wrapper">
+    <div class="calendar-section">
         <div class="day-labels">
             <div style="color: #f04452;">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div style="color: #3182f6;">토</div>
         </div>
         <div id="calendarBoard" class="calendar-grid"></div>
     </div>
+
+    <div class="list-section">
+        <h3 style="margin-top:0">📊 현재 업무 진행 현황</h3>
+        <div id="masterTaskList"></div>
+    </div>
 </div>
 
-<div id="modal">
+<div id="modal" class="modal">
     <div class="modal-box">
-        <h2 style="margin-top:0">새 일정 추가</h2>
-        <input type="text" id="taskTitle" placeholder="업무 이름을 입력하세요">
-        <input type="date" id="taskDate">
-        <input type="text" id="taskPartner" placeholder="협업 담당자">
-        <button class="btn-add" style="width:100%; padding: 16px;" onclick="saveTask()">저장하기</button>
-        <button onclick="closeModal()" style="width:100%; background:none; border:none; color:#8b95a1; margin-top:12px; cursor:pointer;">닫기</button>
+        <h2 id="modalTitle">업무 등록</h2>
+        <input type="text" id="mainTitle" placeholder="업무명 (예: 하반기 전략 수립)">
+        <input type="date" id="targetDate">
+        <input type="text" id="partner" placeholder="협업 담당자">
+        
+        <div style="margin: 15px 0 10px; font-weight: bold;">세부 To-do 리스트 <button class="btn-circle" onclick="addTodoRow()">+</button></div>
+        <div id="todoContainer">
+            </div>
+
+        <button class="btn-main" style="width:100%; margin-top:20px; padding:15px;" onclick="saveTask()">업무 저장</button>
+        <button onclick="closeModal()" style="width:100%; background:none; border:none; color:#8b95a1; margin-top:10px; cursor:pointer;">닫기</button>
     </div>
 </div>
 
 <script>
-    // 상태 관리 변수
-    let tasks = JSON.parse(localStorage.getItem('myFinalGcalV5')) || [];
-    let viewYear = 2026;
-    let viewMonth = 1; // 0=1월, 1=2월...
+    let tasks = JSON.parse(localStorage.getItem('bizManagerV1')) || [];
+    let viewYear = 2026, viewMonth = 1;
+    let editingId = null;
 
-    function openModal() { document.getElementById('modal').style.display = 'flex'; }
+    function showModal(id = null) {
+        editingId = id;
+        const modal = document.getElementById('modal');
+        document.getElementById('todoContainer').innerHTML = '';
+        
+        if(id) {
+            const task = tasks.find(t => t.id === id);
+            document.getElementById('modalTitle').innerText = "업무 상세 및 수정";
+            document.getElementById('mainTitle').value = task.title;
+            document.getElementById('targetDate').value = task.date;
+            document.getElementById('partner').value = task.partner;
+            task.todos.forEach(todo => addTodoRow(todo.text, todo.status));
+        } else {
+            document.getElementById('modalTitle').innerText = "새 업무 등록";
+            document.getElementById('mainTitle').value = '';
+            document.getElementById('targetDate').value = '';
+            document.getElementById('partner').value = '';
+            addTodoRow();
+        }
+        modal.style.display = 'flex';
+    }
+
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
-    function changeMonth(delta) {
-        viewMonth += delta;
-        if (viewMonth < 0) {
-            viewMonth = 11;
-            viewYear--;
-        } else if (viewMonth > 11) {
-            viewMonth = 0;
-            viewYear++;
-        }
-        render();
+    function addTodoRow(text = '', status = '시작전') {
+        const div = document.createElement('div');
+        div.className = 'todo-input-row';
+        div.innerHTML = `
+            <input type="text" class="todo-text" value="${text}" placeholder="할 일 입력" style="margin-bottom:0; flex:2">
+            <select class="todo-status" style="margin-bottom:0; flex:1">
+                <option ${status==='시작전'?'selected':''}>시작전</option>
+                <option ${status==='검토'?'selected':''}>검토</option>
+                <option ${status==='보고'?'selected':''}>보고</option>
+                <option ${status==='완료'?'selected':''}>완료</option>
+                <option ${status==='보완'?'selected':''}>보완</option>
+            </select>
+        `;
+        document.getElementById('todoContainer').appendChild(div);
     }
 
     function saveTask() {
-        const title = document.getElementById('taskTitle').value;
-        const date = document.getElementById('taskDate').value;
-        if(!title || !date) return alert('제목과 날짜를 입력해주세요.');
-        
-        tasks.push({ id: Date.now(), title, date, partner: document.getElementById('taskPartner').value });
-        localStorage.setItem('myFinalGcalV5', JSON.stringify(tasks));
+        const title = document.getElementById('mainTitle').value;
+        const date = document.getElementById('targetDate').value;
+        const todoRows = document.querySelectorAll('.todo-input-row');
+        let todos = [];
+        todoRows.forEach(row => {
+            const text = row.querySelector('.todo-text').value;
+            const status = row.querySelector('.todo-status').value;
+            if(text) todos.push({ text, status });
+        });
+
+        if(!title || !date) return alert('업무명과 날짜를 확인하세요.');
+
+        if(editingId) {
+            tasks = tasks.map(t => t.id === editingId ? { ...t, title, date, partner: document.getElementById('partner').value, todos } : t);
+        } else {
+            tasks.push({ id: Date.now(), title, date, partner: document.getElementById('partner').value, todos });
+        }
+
+        localStorage.setItem('bizManagerV1', JSON.stringify(tasks));
         closeModal();
         render();
     }
 
-    function render() {
-        // 1. 헤더 업데이트 및 버튼 제어
-        document.getElementById('monthDisplay').innerText = `${viewYear}년 ${viewMonth + 1}월`;
-        
-        // 2026년 1월 이전 차단
-        document.getElementById('prevBtn').disabled = (viewYear === 2026 && viewMonth === 0);
-        // 2030년 12월 이후 차단
-        document.getElementById('nextBtn').disabled = (viewYear === 2030 && viewMonth === 11);
+    function changeMonth(delta) {
+        viewMonth += delta;
+        if(viewMonth < 0) { viewMonth = 11; viewYear--; }
+        else if(viewMonth > 11) { viewMonth = 0; viewYear++; }
+        render();
+    }
 
+    function render() {
+        document.getElementById('monthDisplay').innerText = `${viewYear}년 ${viewMonth + 1}월`;
         const board = document.getElementById('calendarBoard');
         board.innerHTML = '';
 
-        // 해당 월의 1일 요일 및 마지막 날짜 계산
         const firstDay = new Date(viewYear, viewMonth, 1).getDay();
         const lastDate = new Date(viewYear, viewMonth + 1, 0).getDate();
 
-        // 공백 칸 생성
-        for(let i=0; i < firstDay; i++) {
-            board.innerHTML += '<div class="cell other-month"></div>';
-        }
+        for(let i=0; i<firstDay; i++) board.innerHTML += '<div class="cell" style="background:#f9fafb"></div>';
 
-        // 날짜 생성
-        for(let d=1; d <= lastDate; d++) {
+        for(let d=1; d<=lastDate; d++) {
             const dateStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
             const dayTasks = tasks.filter(t => t.date === dateStr);
-            const taskHtml = dayTasks.map(t => `<div class="task-badge">${t.title}</div>`).join('');
+            const dayOfWeek = new Date(viewYear, viewMonth, d).getDay();
+            const colorClass = dayOfWeek === 0 ? 'sun' : (dayOfWeek === 6 ? 'sat' : '');
 
             board.innerHTML += `
                 <div class="cell">
-                    <span class="date-num">${d}</span>
-                    <div class="task-list">${taskHtml}</div>
+                    <span class="date-num ${colorClass}">${d}</span>
+                    ${dayTasks.map(t => `<div class="task-dot">${t.title}</div>`).join('')}
                 </div>
             `;
         }
+
+        const listArea = document.getElementById('masterTaskList');
+        listArea.innerHTML = tasks.length === 0 ? '<p>등록된 업무가 없습니다.</p>' : '';
+        tasks.sort((a,b) => new Date(a.date) - new Date(b.date)).forEach(t => {
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            card.onclick = () => showModal(t.id);
+            card.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                    <span style="font-weight:bold; color:#3182f6;">📅 ${t.date}</span>
+                    <span style="font-size:12px; color:#8b95a1;">👤 담당: ${t.partner || '나'}</span>
+                </div>
+                <div style="font-size:18px; font-weight:bold; margin-bottom:10px;">${t.title}</div>
+                <div style="display:flex; flex-wrap:wrap; gap:5px;">
+                    ${t.todos.map(todo => `<span class="todo-status-tag status-${todo.status}">${todo.status}: ${todo.text}</span>`).join('')}
+                </div>
+            `;
+            listArea.appendChild(card);
+        });
     }
 
     render();
