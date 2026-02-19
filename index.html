@@ -2,106 +2,119 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>2026 정밀 캘린더 App</title>
+    <title>2026 My Task Calendar</title>
     <style>
-        /* 외부 라이브러리 없이 순수 CSS로만 제작 */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f2f4f6; margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: 0 auto; background: white; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden; }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 20px; border-bottom: 1px solid #eee; }
+        /* 1. 기본 스타일 */
+        body { margin: 0; padding: 20px; font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; background-color: #f2f4f6; }
+        .app-container { max-width: 1200px; margin: 0 auto; background: white; border-radius: 24px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden; }
+        
+        /* 2. 헤더 */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 25px; border-bottom: 1px solid #f2f4f6; }
         .header h1 { margin: 0; font-size: 24px; color: #191f28; }
-        .btn-add { background: #3182f6; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .btn-add { background: #3182f6; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px; }
         
-        /* 달력 핵심 레이아웃: 7열 고정 */
-        .calendar-grid { display: grid; grid-template-cols: repeat(7, 1fr); border-top: 1px solid #eee; border-left: 1px solid #eee; }
-        .day-label { background: #f9fafb; padding: 10px; text-align: center; font-weight: bold; border-right: 1px solid #eee; border-bottom: 1px solid #eee; font-size: 14px; }
-        .calendar-cell { height: 120px; background: white; border-right: 1px solid #eee; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; }
+        /* 3. 캘린더 격자 - 7열 강제 고정 */
+        .calendar-wrapper { display: block; width: 100%; border-top: 1px solid #eee; }
+        .day-labels { display: flex; background: #fafafa; border-bottom: 1px solid #eee; }
+        .day-labels div { flex: 1; padding: 12px 0; text-align: center; font-weight: bold; font-size: 14px; color: #8b95a1; }
         
-        .date-num { font-weight: bold; margin-bottom: 5px; display: block; }
-        .sun { color: #f04452; } .sat { color: #3182f6; }
+        .calendar-grid { display: flex; flex-wrap: wrap; width: 100%; }
+        .cell { 
+            width: calc(100% / 7); /* 가로 7등분 강제 고정 */
+            min-height: 120px; 
+            box-sizing: border-box; 
+            border-right: 1px solid #eee; 
+            border-bottom: 1px solid #eee; 
+            padding: 10px;
+            background: white;
+        }
+        .cell:nth-child(7n) { border-right: none; } /* 토요일 끝선 제거 */
         
-        .task-badge { background: #e8f3ff; color: #3182f6; font-size: 11px; padding: 3px 6px; border-radius: 4px; margin-bottom: 3px; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        
-        /* 모달 스타일 */
-        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 20px; width: 350px; }
-        input { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        /* 4. 날짜 색상 */
+        .cell .date-num { font-weight: bold; font-size: 14px; margin-bottom: 8px; display: block; }
+        .cell:nth-child(7n+1) .date-num { color: #f04452; } /* 일요일 */
+        .cell:nth-child(7n) .date-num { color: #3182f6; }   /* 토요일 */
+        .other-month { background-color: #f9fafb; color: #ccc; }
+
+        /* 5. 업무 뱃지 */
+        .task-badge { background: #e8f3ff; color: #3182f6; font-size: 11px; padding: 4px 8px; border-radius: 6px; margin-bottom: 4px; 
+                      display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-left: 3px solid #3182f6; }
+
+        /* 6. 모달 */
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; justify-content: center; align-items: center; }
+        .modal-box { background: white; padding: 30px; border-radius: 24px; width: 90%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+        input { width: 100%; padding: 14px; margin-bottom: 12px; border: 1px solid #e5e8eb; border-radius: 12px; box-sizing: border-box; font-size: 15px; }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="app-container">
     <div class="header">
-        <h1 id="monthDisplay">2026년 2월</h1>
-        <button class="btn-add" onclick="showModal()">+ 일정 추가</button>
+        <h1>2026년 2월</h1>
+        <button class="btn-add" onclick="openModal()">+ 일정 추가</button>
     </div>
 
-    <div class="calendar-grid">
-        <div class="day-label sun">일</div>
-        <div class="day-label">월</div>
-        <div class="day-label">화</div>
-        <div class="day-label">수</div>
-        <div class="day-label">목</div>
-        <div class="day-label">금</div>
-        <div class="day-label sat">토</div>
-        <div id="cells" style="display: contents;"></div>
+    <div class="calendar-wrapper">
+        <div class="day-labels">
+            <div style="color: #f04452;">일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div style="color: #3182f6;">토</div>
+        </div>
+        <div id="calendarBoard" class="calendar-grid">
+            </div>
     </div>
 </div>
 
 <div id="modal">
-    <div class="modal-content">
-        <h3>일정 추가</h3>
-        <input type="text" id="taskTitle" placeholder="업무 이름">
+    <div class="modal-box">
+        <h2 style="margin-top:0">새 일정 추가</h2>
+        <input type="text" id="taskTitle" placeholder="업무 이름을 입력하세요">
         <input type="date" id="taskDate">
-        <input type="text" id="taskPartner" placeholder="담당자">
-        <button class="btn-add" style="width: 100%;" onclick="saveTask()">저장하기</button>
-        <button onclick="closeModal()" style="width: 100%; border: none; background: none; margin-top: 10px; color: #888; cursor: pointer;">취소</button>
+        <input type="text" id="taskPartner" placeholder="협업 담당자">
+        <button class="btn-add" style="width:100%; padding: 16px;" onclick="saveTask()">저장하기</button>
+        <button onclick="closeModal()" style="width:100%; background:none; border:none; color:#8b95a1; margin-top:12px; cursor:pointer;">닫기</button>
     </div>
 </div>
 
 <script>
-    let tasks = JSON.parse(localStorage.getItem('finalTasksV3')) || [];
-    
-    function showModal() { document.getElementById('modal').style.display = 'flex'; }
+    let tasks = JSON.parse(localStorage.getItem('myFinalGcalV4')) || [];
+
+    function openModal() { document.getElementById('modal').style.display = 'flex'; }
     function closeModal() { document.getElementById('modal').style.display = 'none'; }
 
     function saveTask() {
         const title = document.getElementById('taskTitle').value;
         const date = document.getElementById('taskDate').value;
-        if(!title || !date) return alert('제목과 날짜를 입력하세요.');
+        if(!title || !date) return alert('제목과 날짜를 입력해주세요.');
         
         tasks.push({ id: Date.now(), title, date, partner: document.getElementById('taskPartner').value });
-        localStorage.setItem('finalTasksV3', JSON.stringify(tasks));
+        localStorage.setItem('myFinalGcalV4', JSON.stringify(tasks));
         closeModal();
         render();
     }
 
     function render() {
-        const year = 2026, month = 1; // 2월 (0부터 시작)
-        const container = document.getElementById('cells');
-        container.innerHTML = '';
+        const year = 2026, month = 1; // 2월 (0부터 시작하므로 1)
+        const board = document.getElementById('calendarBoard');
+        board.innerHTML = '';
 
-        // 2026년 2월 1일의 요일 계산 (0:일, 1:월...)
+        // 2026년 2월 1일 요일 계산 (0:일, 1:월...)
         const firstDay = new Date(year, month, 1).getDay();
         const lastDate = new Date(year, month + 1, 0).getDate();
 
-        // 1. 공백 칸 (정확한 요일 매칭을 위해 필수)
+        // 1. 시작일 전까지 빈 칸 채우기
         for(let i=0; i < firstDay; i++) {
-            container.innerHTML += '<div class="calendar-cell" style="background: #f9fafb;"></div>';
+            board.innerHTML += '<div class="cell other-month"></div>';
         }
 
-        // 2. 날짜 칸 생성
+        // 2. 날짜 채우기
         for(let d=1; d <= lastDate; d++) {
             const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-            const dayOfWeek = new Date(year, month, d).getDay();
-            const colorClass = dayOfWeek === 0 ? 'sun' : (dayOfWeek === 6 ? 'sat' : '');
-            
             const dayTasks = tasks.filter(t => t.date === dateStr);
-            const taskHtml = dayTasks.map(t => `<span class="task-badge">${t.title}</span>`).join('');
+            const taskHtml = dayTasks.map(t => `<div class="task-badge">${t.title}</div>`).join('');
 
-            container.innerHTML += `
-                <div class="calendar-cell">
-                    <span class="date-num ${colorClass}">${d}</span>
-                    ${taskHtml}
+            board.innerHTML += `
+                <div class="cell">
+                    <span class="date-num">${d}</span>
+                    <div class="task-list">${taskHtml}</div>
                 </div>
             `;
         }
