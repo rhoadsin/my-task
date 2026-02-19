@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Professional Task Center v2.1</title>
+    <title>Professional Task Center v2.2</title>
     <style>
         :root { --toss-blue: #3182f6; --toss-red: #f04452; --toss-yellow: #ffb300; --toss-green: #2d7a2d; }
         body { margin: 0; padding: 20px; font-family: 'Apple SD Gothic Neo', sans-serif; background-color: #f2f4f6; color: #191f28; overflow: hidden; }
@@ -30,12 +30,15 @@
         .bg-red { background: var(--toss-red); } .bg-yellow { background: var(--toss-yellow); } .bg-green { background: var(--toss-green); }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
         .modal-box { background: white; padding: 30px; border-radius: 24px; width: 500px; max-height: 85vh; overflow-y: auto; }
-        
-        /* 드래그 앤 드롭 스타일 */
-        .todo-item { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; background: #f9fafb; padding: 10px; border-radius: 12px; border: 1px solid #eee; cursor: grab; transition: background 0.2s; }
-        .todo-item:active { cursor: grabbing; }
-        .todo-item.dragging { opacity: 0.4; background: #e8f3ff; border: 1px dashed var(--toss-blue); }
+        .todo-item { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; background: #f9fafb; padding: 10px; border-radius: 12px; border: 1px solid #eee; cursor: grab; }
+        .todo-item.dragging { opacity: 0.4; background: #e8f3ff; }
         input, select { padding: 10px; border: 1px solid #e5e8eb; border-radius: 8px; }
+        
+        /* 일정 변경 이력 스타일 */
+        .history-box { margin: 10px 0; background: #f8f9fa; border-radius: 10px; padding: 10px; border: 1px dashed #ced4da; }
+        .history-title { font-size: 12px; font-weight: bold; color: #8b95a1; margin-bottom: 5px; }
+        .history-item { font-size: 11px; color: #4e5968; display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid #f1f1f1; }
+        .history-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -47,9 +50,7 @@
             <div id="monthDisplay" class="current-month" onclick="toggleJumpBox(event)">2026년 2월</div>
             <button class="nav-btn" onclick="changeMonth(1)">▶</button>
             <div id="jumpBox" class="jump-box">
-                <div style="font-weight:bold; margin-bottom:10px; font-size:14px; color:#8b95a1;">연도 선택</div>
                 <div class="jump-grid" id="yearGrid"></div>
-                <div style="font-weight:bold; margin:15px 0 10px; font-size:14px; color:#8b95a1;">월 선택</div>
                 <div class="jump-grid" id="monthGrid"></div>
             </div>
         </div>
@@ -70,9 +71,15 @@
         <h2 id="modalTitle">업무 편집</h2>
         <div style="display:flex; flex-direction:column; gap:10px;">
             <input type="text" id="mTitle" placeholder="업무명">
-            <div style="display:flex; gap:10px;">
-                <input type="date" id="mDate" style="flex:1">
-                <input type="text" id="mPartner" placeholder="담당자" style="flex:1">
+            <div style="display:flex; flex-direction:column; gap:5px;">
+                <div style="display:flex; gap:10px;">
+                    <input type="date" id="mDate" style="flex:1">
+                    <input type="text" id="mPartner" placeholder="담당자" style="flex:1">
+                </div>
+                <div id="dateHistoryArea" class="history-box" style="display:none;">
+                    <div class="history-title">📅 완료 예정일 변경 이력</div>
+                    <div id="historyList"></div>
+                </div>
             </div>
             <div style="margin-top:15px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
                 To-do (드래그하여 순서 조정)
@@ -90,24 +97,6 @@
     let viewYear = 2026, viewMonth = 1;
     let editingId = null;
 
-    // --- 캘린더 제어 로직 ---
-    function toggleJumpBox(e) { e.stopPropagation(); const box = document.getElementById('jumpBox'); box.style.display = box.style.display === 'block' ? 'none' : 'block'; if(box.style.display === 'block') renderJumpGrids(); }
-    function renderJumpGrids() {
-        const yGrid = document.getElementById('yearGrid'); const mGrid = document.getElementById('monthGrid');
-        yGrid.innerHTML = ''; mGrid.innerHTML = '';
-        for(let y=2026; y<=2030; y++) {
-            const div = document.createElement('div'); div.className = `jump-item ${y === viewYear ? 'active' : ''}`; div.innerText = y;
-            div.onclick = () => { viewYear = y; renderJumpGrids(); render(); }; yGrid.appendChild(div);
-        }
-        for(let m=0; m<12; m++) {
-            const div = document.createElement('div'); div.className = `jump-item ${m === viewMonth ? 'active' : ''}`; div.innerText = (m+1) + '월';
-            div.onclick = () => { viewMonth = m; document.getElementById('jumpBox').style.display = 'none'; render(); }; mGrid.appendChild(div);
-        }
-    }
-    window.onclick = () => { document.getElementById('jumpBox').style.display = 'none'; };
-    function changeMonth(d) { viewMonth += d; if(viewMonth < 0) { viewMonth = 11; viewYear--; } else if(viewMonth > 11) { viewMonth = 0; viewYear++; } render(); }
-
-    // --- 드래그 앤 드롭 핵심 로직 ---
     function initDragEvents() {
         const container = document.getElementById('todoListContainer');
         container.addEventListener('dragover', e => {
@@ -129,6 +118,22 @@
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
+    function toggleJumpBox(e) { e.stopPropagation(); const box = document.getElementById('jumpBox'); box.style.display = box.style.display === 'block' ? 'none' : 'block'; if(box.style.display === 'block') renderJumpGrids(); }
+    function renderJumpGrids() {
+        const yGrid = document.getElementById('yearGrid'); const mGrid = document.getElementById('monthGrid');
+        yGrid.innerHTML = ''; mGrid.innerHTML = '';
+        for(let y=2026; y<=2030; y++) {
+            const div = document.createElement('div'); div.className = `jump-item ${y === viewYear ? 'active' : ''}`; div.innerText = y;
+            div.onclick = () => { viewYear = y; renderJumpGrids(); render(); }; yGrid.appendChild(div);
+        }
+        for(let m=0; m<12; m++) {
+            const div = document.createElement('div'); div.className = `jump-item ${m === viewMonth ? 'active' : ''}`; div.innerText = (m+1) + '월';
+            div.onclick = () => { viewMonth = m; document.getElementById('jumpBox').style.display = 'none'; render(); }; mGrid.appendChild(div);
+        }
+    }
+    window.onclick = () => { document.getElementById('jumpBox').style.display = 'none'; };
+    function changeMonth(d) { viewMonth += d; if(viewMonth < 0) { viewMonth = 11; viewYear--; } else if(viewMonth > 11) { viewMonth = 0; viewYear++; } render(); }
+
     function addTodoRow(text = '', status = '시작전') {
         const div = document.createElement('div');
         div.className = 'todo-item';
@@ -146,16 +151,36 @@
         document.getElementById('todoListContainer').appendChild(div);
     }
 
-    // --- 데이터 관리 ---
     function saveTask() {
         const title = document.getElementById('mTitle').value;
         const date = document.getElementById('mDate').value;
         const todoNodes = document.querySelectorAll('.todo-item');
         const todos = [...todoNodes].map(n => ({ text: n.querySelector('.t-text').value, status: n.querySelector('.t-status').value }));
+        
         if(!title || !date) return alert('업무명과 날짜를 입력하세요.');
-        const newTask = { id: editingId || Date.now(), title, date, partner: document.getElementById('mPartner').value, todos };
+
+        let currentTask = tasks.find(t => t.id === editingId);
+        let dateHistory = currentTask ? (currentTask.dateHistory || []) : [];
+
+        // 날짜 변경 감지 및 이력 추가
+        if (currentTask && currentTask.date !== date) {
+            const now = new Date();
+            const timestamp = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+            dateHistory.push({ from: currentTask.date, to: date, time: timestamp });
+        }
+
+        const newTask = { 
+            id: editingId || Date.now(), 
+            title, 
+            date, 
+            partner: document.getElementById('mPartner').value, 
+            todos,
+            dateHistory 
+        };
+
         if(editingId) tasks = tasks.map(t => t.id === editingId ? newTask : t);
         else tasks.push(newTask);
+
         localStorage.setItem('bizTaskFinalV2', JSON.stringify(tasks));
         closeModal(); render();
     }
@@ -193,12 +218,33 @@
     function showModal(id = null) {
         editingId = id; document.getElementById('taskModal').style.display = 'flex';
         const container = document.getElementById('todoListContainer'); container.innerHTML = '';
+        const historyArea = document.getElementById('dateHistoryArea');
+        const historyList = document.getElementById('historyList');
+        
         if(id) {
             const t = tasks.find(x => x.id === id);
-            document.getElementById('mTitle').value = t.title; document.getElementById('mDate').value = t.date; document.getElementById('mPartner').value = t.partner;
+            document.getElementById('mTitle').value = t.title; 
+            document.getElementById('mDate').value = t.date; 
+            document.getElementById('mPartner').value = t.partner;
             t.todos.forEach(todo => addTodoRow(todo.text, todo.status));
+            
+            // 이력 표시 로직
+            if(t.dateHistory && t.dateHistory.length > 0) {
+                historyArea.style.display = 'block';
+                historyList.innerHTML = t.dateHistory.map(h => `
+                    <div class="history-item">
+                        <span>${h.time}</span>
+                        <span>${h.from} → <b>${h.to}</b></span>
+                    </div>
+                `).join('');
+            } else {
+                historyArea.style.display = 'none';
+            }
         } else {
-            document.getElementById('mTitle').value = ''; document.getElementById('mDate').value = ''; document.getElementById('mPartner').value = '';
+            document.getElementById('mTitle').value = ''; 
+            document.getElementById('mDate').value = ''; 
+            document.getElementById('mPartner').value = '';
+            historyArea.style.display = 'none';
             addTodoRow();
         }
     }
