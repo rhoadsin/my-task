@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Professional Task Center v2.2</title>
+    <title>Professional Task Center v2.3</title>
     <style>
         :root { --toss-blue: #3182f6; --toss-red: #f04452; --toss-yellow: #ffb300; --toss-green: #2d7a2d; }
         body { margin: 0; padding: 20px; font-family: 'Apple SD Gothic Neo', sans-serif; background-color: #f2f4f6; color: #191f28; overflow: hidden; }
@@ -16,29 +16,32 @@
         .jump-item { padding: 8px; border: 1px solid #eee; border-radius: 8px; text-align: center; cursor: pointer; font-size: 13px; }
         .jump-item.active { background: #e8f3ff; color: var(--toss-blue); font-weight: bold; border-color: var(--toss-blue); }
         .btn-main { background: var(--toss-blue); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        
+        /* 캘린더 드래그 피드백 */
         .calendar-section { flex: 0 0 auto; }
         .day-labels { display: flex; background: #fafafa; border-bottom: 1px solid #eee; }
         .day-labels div { flex: 1; padding: 12px 0; text-align: center; font-weight: bold; font-size: 13px; color: #8b95a1; }
         .calendar-grid { display: flex; flex-wrap: wrap; }
-        .cell { width: calc(100% / 7); height: 105px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; }
+        .cell { width: calc(100% / 7); height: 105px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; transition: background 0.2s; position: relative; }
+        .cell.drag-over { background-color: #f1f7ff; box-shadow: inset 0 0 0 2px var(--toss-blue); }
         .date-num { font-weight: bold; font-size: 13px; margin-bottom: 4px; display: block; }
         .sun { color: var(--toss-red); } .sat { color: var(--toss-blue); }
-        .task-node { background: #e8f3ff; color: var(--toss-blue); font-size: 10px; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; cursor: pointer; border: none; width: 100%; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        
+        .task-node { background: #e8f3ff; color: var(--toss-blue); font-size: 10px; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; cursor: grab; border: none; width: 100%; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+        .task-node:active { cursor: grabbing; }
+
         .list-section { flex: 1; border-top: 2px solid var(--toss-blue); background: #f9fafb; padding: 20px; overflow-y: auto; }
         .task-card { background: white; border-radius: 16px; padding: 18px; margin-bottom: 12px; border: 1px solid #e5e8eb; cursor: pointer; }
         .status-btn { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; color: white; border: none; }
         .bg-red { background: var(--toss-red); } .bg-yellow { background: var(--toss-yellow); } .bg-green { background: var(--toss-green); }
+        
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
         .modal-box { background: white; padding: 30px; border-radius: 24px; width: 500px; max-height: 85vh; overflow-y: auto; }
         .todo-item { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; background: #f9fafb; padding: 10px; border-radius: 12px; border: 1px solid #eee; cursor: grab; }
-        .todo-item.dragging { opacity: 0.4; background: #e8f3ff; }
         input, select { padding: 10px; border: 1px solid #e5e8eb; border-radius: 8px; }
-        
-        /* 일정 변경 이력 스타일 */
         .history-box { margin: 10px 0; background: #f8f9fa; border-radius: 10px; padding: 10px; border: 1px dashed #ced4da; }
         .history-title { font-size: 12px; font-weight: bold; color: #8b95a1; margin-bottom: 5px; }
         .history-item { font-size: 11px; color: #4e5968; display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid #f1f1f1; }
-        .history-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
@@ -81,10 +84,7 @@
                     <div id="historyList"></div>
                 </div>
             </div>
-            <div style="margin-top:15px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">
-                To-do (드래그하여 순서 조정)
-                <button onclick="addTodoRow()" style="color:var(--toss-blue); border:none; background:none; cursor:pointer; font-weight:bold;">+ 항목추가</button>
-            </div>
+            <div style="margin-top:15px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">To-do (드래그하여 순서 조정) <button onclick="addTodoRow()" style="color:var(--toss-blue); border:none; background:none; cursor:pointer; font-weight:bold;">+ 항목추가</button></div>
             <div id="todoListContainer"></div>
             <button class="btn-main" style="margin-top:20px; padding:15px;" onclick="saveTask()">정보 저장</button>
             <button onclick="closeModal()" style="border:none; background:none; color:#8b95a1; margin-top:10px; cursor:pointer;">닫기</button>
@@ -97,27 +97,47 @@
     let viewYear = 2026, viewMonth = 1;
     let editingId = null;
 
-    function initDragEvents() {
-        const container = document.getElementById('todoListContainer');
-        container.addEventListener('dragover', e => {
-            e.preventDefault();
-            const dragging = document.querySelector('.dragging');
-            const afterElement = getDragAfterElement(container, e.clientY);
-            if (afterElement == null) container.appendChild(dragging);
-            else container.insertBefore(dragging, afterElement);
-        });
+    // --- 캘린더 드래그 앤 드롭 핵심 로직 ---
+    function handleTaskDragStart(e, taskId) {
+        e.dataTransfer.setData("taskId", taskId);
+        e.currentTarget.style.opacity = "0.4";
     }
 
-    function getDragAfterElement(container, y) {
-        const elements = [...container.querySelectorAll('.todo-item:not(.dragging)')];
-        return elements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
-            else return closest;
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    function handleTaskDragEnd(e) {
+        e.currentTarget.style.opacity = "1";
+        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('drag-over'));
     }
 
+    function onCellDragOver(e) {
+        e.preventDefault();
+        e.currentTarget.classList.add('drag-over');
+    }
+
+    function onCellDragLeave(e) {
+        e.currentTarget.classList.remove('drag-over');
+    }
+
+    function onCellDrop(e, targetDate) {
+        e.preventDefault();
+        const taskId = e.dataTransfer.getData("taskId");
+        const taskIndex = tasks.findIndex(t => t.id == taskId);
+        
+        if (taskIndex > -1 && tasks[taskIndex].date !== targetDate) {
+            const oldDate = tasks[taskIndex].date;
+            tasks[taskIndex].date = targetDate;
+            
+            // 이력 기록 로직 통합
+            if (!tasks[taskIndex].dateHistory) tasks[taskIndex].dateHistory = [];
+            const now = new Date();
+            const timestamp = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
+            tasks[taskIndex].dateHistory.push({ from: oldDate, to: targetDate, time: timestamp + " (드래그 이동)" });
+            
+            localStorage.setItem('bizTaskFinalV2', JSON.stringify(tasks));
+            render();
+        }
+    }
+
+    // --- 기본 UI 렌더링 및 유틸리티 ---
     function toggleJumpBox(e) { e.stopPropagation(); const box = document.getElementById('jumpBox'); box.style.display = box.style.display === 'block' ? 'none' : 'block'; if(box.style.display === 'block') renderJumpGrids(); }
     function renderJumpGrids() {
         const yGrid = document.getElementById('yearGrid'); const mGrid = document.getElementById('monthGrid');
@@ -134,77 +154,48 @@
     window.onclick = () => { document.getElementById('jumpBox').style.display = 'none'; };
     function changeMonth(d) { viewMonth += d; if(viewMonth < 0) { viewMonth = 11; viewYear--; } else if(viewMonth > 11) { viewMonth = 0; viewYear++; } render(); }
 
-    function addTodoRow(text = '', status = '시작전') {
-        const div = document.createElement('div');
-        div.className = 'todo-item';
-        div.draggable = true;
-        div.innerHTML = `
-            <span style="color:#adb5bd; cursor:grab;">☰</span>
-            <input type="text" class="t-text" value="${text}" placeholder="할 일 입력" style="flex:1">
-            <select class="t-status">
-                ${['시작전','검토','보고','완료','보완'].map(s => `<option ${s===status?'selected':''}>${s}</option>`).join('')}
-            </select>
-            <button onclick="this.parentElement.remove()" style="border:none; background:#ff4d4f; color:white; border-radius:6px; cursor:pointer; padding:5px 10px;">-</button>
-        `;
-        div.addEventListener('dragstart', () => div.classList.add('dragging'));
-        div.addEventListener('dragend', () => div.classList.remove('dragging'));
-        document.getElementById('todoListContainer').appendChild(div);
-    }
-
-    function saveTask() {
-        const title = document.getElementById('mTitle').value;
-        const date = document.getElementById('mDate').value;
-        const todoNodes = document.querySelectorAll('.todo-item');
-        const todos = [...todoNodes].map(n => ({ text: n.querySelector('.t-text').value, status: n.querySelector('.t-status').value }));
-        
-        if(!title || !date) return alert('업무명과 날짜를 입력하세요.');
-
-        let currentTask = tasks.find(t => t.id === editingId);
-        let dateHistory = currentTask ? (currentTask.dateHistory || []) : [];
-
-        // 날짜 변경 감지 및 이력 추가
-        if (currentTask && currentTask.date !== date) {
-            const now = new Date();
-            const timestamp = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-            dateHistory.push({ from: currentTask.date, to: date, time: timestamp });
-        }
-
-        const newTask = { 
-            id: editingId || Date.now(), 
-            title, 
-            date, 
-            partner: document.getElementById('mPartner').value, 
-            todos,
-            dateHistory 
-        };
-
-        if(editingId) tasks = tasks.map(t => t.id === editingId ? newTask : t);
-        else tasks.push(newTask);
-
-        localStorage.setItem('bizTaskFinalV2', JSON.stringify(tasks));
-        closeModal(); render();
-    }
-
     function render() {
         document.getElementById('monthDisplay').innerText = `${viewYear}년 ${viewMonth + 1}월`;
         const board = document.getElementById('calendarBoard'); board.innerHTML = '';
         const firstDay = new Date(viewYear, viewMonth, 1).getDay();
         const lastDate = new Date(viewYear, viewMonth + 1, 0).getDate();
+
         for(let i=0; i<firstDay; i++) board.innerHTML += '<div class="cell" style="background:#f9fafb"></div>';
+        
         for(let d=1; d<=lastDate; d++) {
             const dStr = `${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
             const dayTasks = tasks.filter(t => t.date === dStr);
             const dayIdx = new Date(viewYear, viewMonth, d).getDay();
-            board.innerHTML += `<div class="cell"><span class="date-num ${dayIdx===0?'sun':(dayIdx===6?'sat':'')}">${d}</span>${dayTasks.map(t => `<button class="task-node" onclick="showModal(${t.id})">${t.title}</button>`).join('')}</div>`;
+            
+            const cell = document.createElement('div');
+            cell.className = 'cell';
+            cell.ondragover = (e) => onCellDragOver(e);
+            cell.ondragleave = (e) => onCellDragLeave(e);
+            cell.ondrop = (e) => onCellDrop(e, dStr);
+            
+            cell.innerHTML = `<span class="date-num ${dayIdx===0?'sun':(dayIdx===6?'sat':'')}">${d}</span>`;
+            
+            dayTasks.forEach(t => {
+                const node = document.createElement('button');
+                node.className = 'task-node';
+                node.draggable = true;
+                node.innerText = t.title;
+                node.onclick = () => showModal(t.id);
+                node.ondragstart = (e) => handleTaskDragStart(e, t.id);
+                node.ondragend = (e) => handleTaskDragEnd(e);
+                cell.appendChild(node);
+            });
+            board.appendChild(cell);
         }
         renderList();
     }
 
+    // --- 리스트 및 모달 함수 (기존 로직 유지) ---
     function renderList() {
         const list = document.getElementById('masterTaskList'); list.innerHTML = '';
         tasks.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(t => {
             let status = { label: '시작 전', class: 'bg-red' };
-            if(t.todos.length > 0) {
+            if(t.todos && t.todos.length > 0) {
                 if(t.todos[0].status === '시작전') status = { label: '시작 전', class: 'bg-red' };
                 else if(t.todos[t.todos.length-1].status === '완료') status = { label: '완료', class: 'bg-green' };
                 else status = { label: '진행 중', class: 'bg-yellow' };
@@ -220,37 +211,47 @@
         const container = document.getElementById('todoListContainer'); container.innerHTML = '';
         const historyArea = document.getElementById('dateHistoryArea');
         const historyList = document.getElementById('historyList');
-        
         if(id) {
             const t = tasks.find(x => x.id === id);
-            document.getElementById('mTitle').value = t.title; 
-            document.getElementById('mDate').value = t.date; 
-            document.getElementById('mPartner').value = t.partner;
-            t.todos.forEach(todo => addTodoRow(todo.text, todo.status));
-            
-            // 이력 표시 로직
+            document.getElementById('mTitle').value = t.title; document.getElementById('mDate').value = t.date; document.getElementById('mPartner').value = t.partner;
+            if(t.todos) t.todos.forEach(todo => addTodoRow(todo.text, todo.status));
             if(t.dateHistory && t.dateHistory.length > 0) {
                 historyArea.style.display = 'block';
-                historyList.innerHTML = t.dateHistory.map(h => `
-                    <div class="history-item">
-                        <span>${h.time}</span>
-                        <span>${h.from} → <b>${h.to}</b></span>
-                    </div>
-                `).join('');
-            } else {
-                historyArea.style.display = 'none';
-            }
+                historyList.innerHTML = t.dateHistory.map(h => `<div class="history-item"><span>${h.time}</span><span>${h.from} → <b>${h.to}</b></span></div>`).join('');
+            } else historyArea.style.display = 'none';
         } else {
-            document.getElementById('mTitle').value = ''; 
-            document.getElementById('mDate').value = ''; 
-            document.getElementById('mPartner').value = '';
-            historyArea.style.display = 'none';
-            addTodoRow();
+            document.getElementById('mTitle').value = ''; document.getElementById('mDate').value = ''; document.getElementById('mPartner').value = '';
+            historyArea.style.display = 'none'; addTodoRow();
         }
     }
-    function closeModal() { document.getElementById('taskModal').style.display = 'none'; }
 
-    initDragEvents();
+    function saveTask() {
+        const title = document.getElementById('mTitle').value;
+        const date = document.getElementById('mDate').value;
+        const todoNodes = document.querySelectorAll('.todo-item');
+        const todos = [...todoNodes].map(n => ({ text: n.querySelector('.t-text').value, status: n.querySelector('.t-status').value }));
+        if(!title || !date) return alert('입력 확인');
+        let currentTask = tasks.find(t => t.id === editingId);
+        let dateHistory = currentTask ? (currentTask.dateHistory || []) : [];
+        if (currentTask && currentTask.date !== date) {
+            const now = new Date();
+            dateHistory.push({ from: currentTask.date, to: date, time: `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}` });
+        }
+        const newTask = { id: editingId || Date.now(), title, date, partner: document.getElementById('mPartner').value, todos, dateHistory };
+        if(editingId) tasks = tasks.map(t => t.id === editingId ? newTask : t);
+        else tasks.push(newTask);
+        localStorage.setItem('bizTaskFinalV2', JSON.stringify(tasks));
+        closeModal(); render();
+    }
+
+    function addTodoRow(text = '', status = '시작전') {
+        const div = document.createElement('div');
+        div.className = 'todo-item';
+        div.innerHTML = `<span style="color:#adb5bd;">☰</span><input type="text" class="t-text" value="${text}" placeholder="할 일" style="flex:1"><select class="t-status">${['시작전','검토','보고','완료','보완'].map(s => `<option ${s===status?'selected':''}>${s}</option>`).join('')}</select><button onclick="this.parentElement.remove()" style="border:none; background:#ff4d4f; color:white; border-radius:6px; cursor:pointer;">-</button>`;
+        document.getElementById('todoListContainer').appendChild(div);
+    }
+
+    function closeModal() { document.getElementById('taskModal').style.display = 'none'; }
     render();
 </script>
 </body>
