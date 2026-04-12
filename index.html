@@ -2,13 +2,13 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Professional Task Center v2.4 (Compact)</title>
+    <title>Professional Task Center v2.5 (Ultra-Compact)</title>
     <style>
         :root { --toss-blue: #3182f6; --toss-red: #f04452; --toss-yellow: #ffb300; --toss-green: #2d7a2d; }
         body { margin: 0; padding: 15px; font-family: 'Apple SD Gothic Neo', sans-serif; background-color: #f2f4f6; color: #191f28; overflow: hidden; }
         .app-container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 20px; display: flex; flex-direction: column; height: calc(100vh - 30px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
         
-        /* 헤더 압축 */
+        /* 헤더 */
         .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-bottom: 1px solid #f2f4f6; shrink: 0; }
         .nav-group { display: flex; align-items: center; gap: 8px; position: relative; }
         .nav-btn { background: none; border: none; padding: 8px; cursor: pointer; font-size: 18px; border-radius: 50%; color: #4e5968; }
@@ -19,29 +19,28 @@
         .jump-item.active { background: #e8f3ff; color: var(--toss-blue); font-weight: bold; border-color: var(--toss-blue); }
         .btn-main { background: var(--toss-blue); color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 14px; }
         
-        /* 캘린더 압축 (높이 축소) */
+        /* 캘린더 압축 (동적 높이 적용) */
         .calendar-section { flex: 0 0 auto; }
-        .day-labels { display: flex; background: #fafafa; border-bottom: 1px solid #eee; }
-        .day-labels div { flex: 1; padding: 8px 0; text-align: center; font-weight: bold; font-size: 12px; color: #8b95a1; }
-        .calendar-grid { display: flex; flex-wrap: wrap; }
-        /* 높이를 75px로 대폭 축소, 내부 스크롤 허용 */
-        .cell { width: calc(100% / 7); height: 75px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; padding: 4px; box-sizing: border-box; transition: background 0.2s; position: relative; overflow-y: auto; }
-        .cell::-webkit-scrollbar { width: 4px; }
-        .cell::-webkit-scrollbar-thumb { background: #e5e8eb; border-radius: 2px; }
+        .day-labels { display: grid; grid-template-columns: repeat(7, 1fr); background: #fafafa; border-bottom: 1px solid #eee; }
+        .day-labels div { padding: 6px 0; text-align: center; font-weight: bold; font-size: 12px; color: #8b95a1; }
+        
+        /* 핵심: 빈 줄은 40px로 최소화, 업무가 있으면 알아서 늘어나는 마법의 그리드 */
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: minmax(40px, auto); }
+        .cell { border-right: 1px solid #eee; border-bottom: 1px solid #eee; padding: 4px; box-sizing: border-box; transition: background 0.2s; position: relative; }
         .cell.drag-over { background-color: #f1f7ff; box-shadow: inset 0 0 0 2px var(--toss-blue); }
         .date-num { font-weight: bold; font-size: 12px; margin-bottom: 2px; display: block; }
         .sun { color: var(--toss-red); } .sat { color: var(--toss-blue); }
         .task-node { background: #e8f3ff; color: var(--toss-blue); font-size: 10px; padding: 2px 4px; border-radius: 4px; margin-bottom: 2px; cursor: grab; border: none; width: 100%; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
         
-        /* 하단 리스트 압축 (한 화면에 많이 보이게) */
+        /* 하단 리스트 압축 (To-do 제거 및 여백 최소화) */
         .list-section { flex: 1; border-top: 2px solid var(--toss-blue); background: #f9fafb; padding: 15px 20px; overflow-y: auto; }
         .list-section h3 { margin-top: 0; margin-bottom: 10px; font-size: 16px; }
-        .task-card { background: white; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; border: 1px solid #e5e8eb; cursor: pointer; display: flex; flex-direction: column; gap: 8px; }
+        .task-card { background: white; border-radius: 10px; padding: 10px 15px; margin-bottom: 6px; border: 1px solid #e5e8eb; cursor: pointer; transition: 0.1s; }
+        .task-card:hover { border-color: var(--toss-blue); }
         .status-btn { padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; color: white; border: none; white-space: nowrap; }
         .bg-red { background: var(--toss-red); } .bg-yellow { background: var(--toss-yellow); } .bg-green { background: var(--toss-green); }
-        .todo-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #eee; color: #666; white-space: nowrap; }
         
-        /* 모달 유지 */
+        /* 모달 (기존 유지) */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
         .modal-box { background: white; padding: 25px; border-radius: 20px; width: 480px; max-height: 85vh; overflow-y: auto; }
         .todo-item { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; background: #f9fafb; padding: 8px; border-radius: 10px; border: 1px solid #eee; cursor: grab; }
@@ -67,10 +66,12 @@
         </div>
         <button class="btn-main" onclick="showModal()">+ 업무 등록</button>
     </div>
+    
     <div class="calendar-section">
         <div class="day-labels"><div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div></div>
         <div id="calendarBoard" class="calendar-grid"></div>
     </div>
+    
     <div class="list-section">
         <h3>📊 현재 업무 진행 현황</h3>
         <div id="masterTaskList"></div>
@@ -105,17 +106,17 @@
 <script>
     let tasks = JSON.parse(localStorage.getItem('bizTaskFinalV2')) || [];
     
-    // --- 1. 초기 캘린더 '현재 시스템 날짜' 연동 로직 ---
+    // 현재 접속 날짜(시스템 시간) 기준으로 초기 월 세팅
     const today = new Date();
     let viewYear = today.getFullYear();
     let viewMonth = today.getMonth(); // 0: 1월, 1: 2월...
     
-    // 허용 범위(2026~2030) 내로 자동 보정
     if(viewYear < 2026) { viewYear = 2026; viewMonth = 0; }
     else if(viewYear > 2030) { viewYear = 2030; viewMonth = 11; }
 
     let editingId = null;
 
+    /* 드래그 앤 드롭 함수들 */
     function handleTaskDragStart(e, taskId) { e.dataTransfer.setData("taskId", taskId); e.currentTarget.style.opacity = "0.4"; }
     function handleTaskDragEnd(e) { e.currentTarget.style.opacity = "1"; document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('drag-over')); }
     function onCellDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
@@ -140,6 +141,7 @@
         }
     }
 
+    /* 퀵 이동 기능 */
     function toggleJumpBox(e) { e.stopPropagation(); const box = document.getElementById('jumpBox'); box.style.display = box.style.display === 'block' ? 'none' : 'block'; if(box.style.display === 'block') renderJumpGrids(); }
     function renderJumpGrids() {
         const yGrid = document.getElementById('yearGrid'); const mGrid = document.getElementById('monthGrid');
@@ -156,6 +158,7 @@
     window.onclick = () => { document.getElementById('jumpBox').style.display = 'none'; };
     function changeMonth(d) { viewMonth += d; if(viewMonth < 0) { viewMonth = 11; viewYear--; } else if(viewMonth > 11) { viewMonth = 0; viewYear++; } render(); }
 
+    /* 화면 렌더링 */
     function render() {
         document.getElementById('monthDisplay').innerText = `${viewYear}년 ${viewMonth + 1}월`;
         const board = document.getElementById('calendarBoard'); board.innerHTML = '';
@@ -192,7 +195,7 @@
         renderList();
     }
 
-    // --- 하단 리스트 UI 컴팩트 최적화 ---
+    /* 하단 리스트 - 초압축 1줄 디자인 (세부 To-do 뱃지 제거) */
     function renderList() {
         const list = document.getElementById('masterTaskList'); list.innerHTML = '';
         tasks.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(t => {
@@ -204,7 +207,6 @@
             }
             const div = document.createElement('div'); div.className = 'task-card'; div.onclick = () => showModal(t.id);
             
-            // 한 줄에 촘촘하게 정보 배치
             div.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div style="display:flex; align-items:center; gap:8px;">
@@ -213,14 +215,12 @@
                     </div>
                     <span style="color:#8b95a1; font-size:12px;">📅 ${t.date.slice(5)} | 👤 ${t.partner || '미지정'}</span>
                 </div>
-                <div style="display:flex; flex-wrap:wrap; gap:4px;">
-                    ${t.todos ? t.todos.map(todo => `<span class="todo-badge">${todo.text}(${todo.status})</span>`).join('') : ''}
-                </div>
             `;
             list.appendChild(div);
         });
     }
 
+    /* 모달 내부 로직 유지 */
     function initDragEvents() {
         const container = document.getElementById('todoListContainer');
         container.addEventListener('dragover', e => {
