@@ -2,45 +2,53 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Professional Task Center v2.3</title>
+    <title>Professional Task Center v2.4 (Compact)</title>
     <style>
         :root { --toss-blue: #3182f6; --toss-red: #f04452; --toss-yellow: #ffb300; --toss-green: #2d7a2d; }
-        body { margin: 0; padding: 20px; font-family: 'Apple SD Gothic Neo', sans-serif; background-color: #f2f4f6; color: #191f28; overflow: hidden; }
-        .app-container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 24px; display: flex; flex-direction: column; height: calc(100vh - 40px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        .header { display: flex; justify-content: space-between; align-items: center; padding: 15px 25px; border-bottom: 1px solid #f2f4f6; shrink: 0; }
-        .nav-group { display: flex; align-items: center; gap: 10px; position: relative; }
-        .nav-btn { background: none; border: none; padding: 10px; cursor: pointer; font-size: 20px; display: flex; align-items: center; border-radius: 50%; }
-        .current-month { font-size: 22px; font-weight: bold; cursor: pointer; padding: 5px 15px; border-radius: 10px; display: flex; align-items: center; gap: 5px; }
-        .jump-box { display: none; position: absolute; top: 50px; left: 50%; transform: translateX(-50%); background: white; border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 3000; padding: 20px; border: 1px solid #eee; width: 280px; }
-        .jump-grid { display: grid; grid-template-cols: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
-        .jump-item { padding: 8px; border: 1px solid #eee; border-radius: 8px; text-align: center; cursor: pointer; font-size: 13px; }
-        .jump-item.active { background: #e8f3ff; color: var(--toss-blue); font-weight: bold; border-color: var(--toss-blue); }
-        .btn-main { background: var(--toss-blue); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: bold; cursor: pointer; }
+        body { margin: 0; padding: 15px; font-family: 'Apple SD Gothic Neo', sans-serif; background-color: #f2f4f6; color: #191f28; overflow: hidden; }
+        .app-container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 20px; display: flex; flex-direction: column; height: calc(100vh - 30px); box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
         
-        /* 캘린더 드래그 피드백 */
+        /* 헤더 압축 */
+        .header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; border-bottom: 1px solid #f2f4f6; shrink: 0; }
+        .nav-group { display: flex; align-items: center; gap: 8px; position: relative; }
+        .nav-btn { background: none; border: none; padding: 8px; cursor: pointer; font-size: 18px; border-radius: 50%; color: #4e5968; }
+        .current-month { font-size: 20px; font-weight: bold; cursor: pointer; padding: 4px 12px; border-radius: 8px; display: flex; align-items: center; gap: 4px; }
+        .jump-box { display: none; position: absolute; top: 40px; left: 50%; transform: translateX(-50%); background: white; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.15); z-index: 3000; padding: 15px; border: 1px solid #eee; width: 260px; }
+        .jump-grid { display: grid; grid-template-cols: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+        .jump-item { padding: 6px; border: 1px solid #eee; border-radius: 6px; text-align: center; cursor: pointer; font-size: 12px; }
+        .jump-item.active { background: #e8f3ff; color: var(--toss-blue); font-weight: bold; border-color: var(--toss-blue); }
+        .btn-main { background: var(--toss-blue); color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 14px; }
+        
+        /* 캘린더 압축 (높이 축소) */
         .calendar-section { flex: 0 0 auto; }
         .day-labels { display: flex; background: #fafafa; border-bottom: 1px solid #eee; }
-        .day-labels div { flex: 1; padding: 12px 0; text-align: center; font-weight: bold; font-size: 13px; color: #8b95a1; }
+        .day-labels div { flex: 1; padding: 8px 0; text-align: center; font-weight: bold; font-size: 12px; color: #8b95a1; }
         .calendar-grid { display: flex; flex-wrap: wrap; }
-        .cell { width: calc(100% / 7); height: 105px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; padding: 8px; box-sizing: border-box; transition: background 0.2s; position: relative; }
+        /* 높이를 75px로 대폭 축소, 내부 스크롤 허용 */
+        .cell { width: calc(100% / 7); height: 75px; border-right: 1px solid #eee; border-bottom: 1px solid #eee; padding: 4px; box-sizing: border-box; transition: background 0.2s; position: relative; overflow-y: auto; }
+        .cell::-webkit-scrollbar { width: 4px; }
+        .cell::-webkit-scrollbar-thumb { background: #e5e8eb; border-radius: 2px; }
         .cell.drag-over { background-color: #f1f7ff; box-shadow: inset 0 0 0 2px var(--toss-blue); }
-        .date-num { font-weight: bold; font-size: 13px; margin-bottom: 4px; display: block; }
+        .date-num { font-weight: bold; font-size: 12px; margin-bottom: 2px; display: block; }
         .sun { color: var(--toss-red); } .sat { color: var(--toss-blue); }
+        .task-node { background: #e8f3ff; color: var(--toss-blue); font-size: 10px; padding: 2px 4px; border-radius: 4px; margin-bottom: 2px; cursor: grab; border: none; width: 100%; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
         
-        .task-node { background: #e8f3ff; color: var(--toss-blue); font-size: 10px; padding: 3px 6px; border-radius: 4px; margin-bottom: 2px; cursor: grab; border: none; width: 100%; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
-        .task-node:active { cursor: grabbing; }
-
-        .list-section { flex: 1; border-top: 2px solid var(--toss-blue); background: #f9fafb; padding: 20px; overflow-y: auto; }
-        .task-card { background: white; border-radius: 16px; padding: 18px; margin-bottom: 12px; border: 1px solid #e5e8eb; cursor: pointer; }
-        .status-btn { padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; color: white; border: none; }
+        /* 하단 리스트 압축 (한 화면에 많이 보이게) */
+        .list-section { flex: 1; border-top: 2px solid var(--toss-blue); background: #f9fafb; padding: 15px 20px; overflow-y: auto; }
+        .list-section h3 { margin-top: 0; margin-bottom: 10px; font-size: 16px; }
+        .task-card { background: white; border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; border: 1px solid #e5e8eb; cursor: pointer; display: flex; flex-direction: column; gap: 8px; }
+        .status-btn { padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: bold; color: white; border: none; white-space: nowrap; }
         .bg-red { background: var(--toss-red); } .bg-yellow { background: var(--toss-yellow); } .bg-green { background: var(--toss-green); }
+        .todo-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #eee; color: #666; white-space: nowrap; }
         
+        /* 모달 유지 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 2000; justify-content: center; align-items: center; }
-        .modal-box { background: white; padding: 30px; border-radius: 24px; width: 500px; max-height: 85vh; overflow-y: auto; }
-        .todo-item { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; background: #f9fafb; padding: 10px; border-radius: 12px; border: 1px solid #eee; cursor: grab; }
-        input, select { padding: 10px; border: 1px solid #e5e8eb; border-radius: 8px; }
-        .history-box { margin: 10px 0; background: #f8f9fa; border-radius: 10px; padding: 10px; border: 1px dashed #ced4da; }
-        .history-title { font-size: 12px; font-weight: bold; color: #8b95a1; margin-bottom: 5px; }
+        .modal-box { background: white; padding: 25px; border-radius: 20px; width: 480px; max-height: 85vh; overflow-y: auto; }
+        .todo-item { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; background: #f9fafb; padding: 8px; border-radius: 10px; border: 1px solid #eee; cursor: grab; }
+        .todo-item.dragging { opacity: 0.4; background: #e8f3ff; }
+        input, select { padding: 8px; border: 1px solid #e5e8eb; border-radius: 8px; font-size: 13px; }
+        .history-box { margin: 8px 0; background: #f8f9fa; border-radius: 8px; padding: 8px; border: 1px dashed #ced4da; }
+        .history-title { font-size: 11px; font-weight: bold; color: #8b95a1; margin-bottom: 4px; }
         .history-item { font-size: 11px; color: #4e5968; display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid #f1f1f1; }
     </style>
 </head>
@@ -50,7 +58,7 @@
     <div class="header">
         <div class="nav-group">
             <button class="nav-btn" onclick="changeMonth(-1)">◀</button>
-            <div id="monthDisplay" class="current-month" onclick="toggleJumpBox(event)">2026년 2월</div>
+            <div id="monthDisplay" class="current-month" onclick="toggleJumpBox(event)"></div>
             <button class="nav-btn" onclick="changeMonth(1)">▶</button>
             <div id="jumpBox" class="jump-box">
                 <div class="jump-grid" id="yearGrid"></div>
@@ -64,18 +72,18 @@
         <div id="calendarBoard" class="calendar-grid"></div>
     </div>
     <div class="list-section">
-        <h3 style="margin-top:0">📊 현재 업무 진행 현황</h3>
+        <h3>📊 현재 업무 진행 현황</h3>
         <div id="masterTaskList"></div>
     </div>
 </div>
 
 <div id="taskModal" class="modal">
     <div class="modal-box">
-        <h2 id="modalTitle">업무 편집</h2>
-        <div style="display:flex; flex-direction:column; gap:10px;">
+        <h2 id="modalTitle" style="margin-top:0; font-size:20px;">업무 편집</h2>
+        <div style="display:flex; flex-direction:column; gap:8px;">
             <input type="text" id="mTitle" placeholder="업무명">
-            <div style="display:flex; flex-direction:column; gap:5px;">
-                <div style="display:flex; gap:10px;">
+            <div style="display:flex; flex-direction:column; gap:4px;">
+                <div style="display:flex; gap:8px;">
                     <input type="date" id="mDate" style="flex:1">
                     <input type="text" id="mPartner" placeholder="담당자" style="flex:1">
                 </div>
@@ -84,39 +92,35 @@
                     <div id="historyList"></div>
                 </div>
             </div>
-            <div style="margin-top:15px; font-weight:bold; display:flex; justify-content:space-between; align-items:center;">To-do (드래그하여 순서 조정) <button onclick="addTodoRow()" style="color:var(--toss-blue); border:none; background:none; cursor:pointer; font-weight:bold;">+ 항목추가</button></div>
+            <div style="margin-top:10px; font-weight:bold; font-size:14px; display:flex; justify-content:space-between; align-items:center;">
+                To-do (드래그 순서 조정) <button onclick="addTodoRow()" style="color:var(--toss-blue); border:none; background:none; cursor:pointer; font-weight:bold; font-size:13px;">+ 추가</button>
+            </div>
             <div id="todoListContainer"></div>
-            <button class="btn-main" style="margin-top:20px; padding:15px;" onclick="saveTask()">정보 저장</button>
-            <button onclick="closeModal()" style="border:none; background:none; color:#8b95a1; margin-top:10px; cursor:pointer;">닫기</button>
+            <button class="btn-main" style="margin-top:15px; padding:12px;" onclick="saveTask()">정보 저장</button>
+            <button onclick="closeModal()" style="border:none; background:none; color:#8b95a1; margin-top:5px; cursor:pointer;">닫기</button>
         </div>
     </div>
 </div>
 
 <script>
     let tasks = JSON.parse(localStorage.getItem('bizTaskFinalV2')) || [];
-    let viewYear = 2026, viewMonth = 1;
+    
+    // --- 1. 초기 캘린더 '현재 시스템 날짜' 연동 로직 ---
+    const today = new Date();
+    let viewYear = today.getFullYear();
+    let viewMonth = today.getMonth(); // 0: 1월, 1: 2월...
+    
+    // 허용 범위(2026~2030) 내로 자동 보정
+    if(viewYear < 2026) { viewYear = 2026; viewMonth = 0; }
+    else if(viewYear > 2030) { viewYear = 2030; viewMonth = 11; }
+
     let editingId = null;
 
-    // --- 캘린더 드래그 앤 드롭 핵심 로직 ---
-    function handleTaskDragStart(e, taskId) {
-        e.dataTransfer.setData("taskId", taskId);
-        e.currentTarget.style.opacity = "0.4";
-    }
-
-    function handleTaskDragEnd(e) {
-        e.currentTarget.style.opacity = "1";
-        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('drag-over'));
-    }
-
-    function onCellDragOver(e) {
-        e.preventDefault();
-        e.currentTarget.classList.add('drag-over');
-    }
-
-    function onCellDragLeave(e) {
-        e.currentTarget.classList.remove('drag-over');
-    }
-
+    function handleTaskDragStart(e, taskId) { e.dataTransfer.setData("taskId", taskId); e.currentTarget.style.opacity = "0.4"; }
+    function handleTaskDragEnd(e) { e.currentTarget.style.opacity = "1"; document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('drag-over')); }
+    function onCellDragOver(e) { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
+    function onCellDragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
+    
     function onCellDrop(e, targetDate) {
         e.preventDefault();
         const taskId = e.dataTransfer.getData("taskId");
@@ -126,18 +130,16 @@
             const oldDate = tasks[taskIndex].date;
             tasks[taskIndex].date = targetDate;
             
-            // 이력 기록 로직 통합
             if (!tasks[taskIndex].dateHistory) tasks[taskIndex].dateHistory = [];
             const now = new Date();
             const timestamp = `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-            tasks[taskIndex].dateHistory.push({ from: oldDate, to: targetDate, time: timestamp + " (드래그 이동)" });
+            tasks[taskIndex].dateHistory.push({ from: oldDate, to: targetDate, time: timestamp + " (드래그)" });
             
             localStorage.setItem('bizTaskFinalV2', JSON.stringify(tasks));
             render();
         }
     }
 
-    // --- 기본 UI 렌더링 및 유틸리티 ---
     function toggleJumpBox(e) { e.stopPropagation(); const box = document.getElementById('jumpBox'); box.style.display = box.style.display === 'block' ? 'none' : 'block'; if(box.style.display === 'block') renderJumpGrids(); }
     function renderJumpGrids() {
         const yGrid = document.getElementById('yearGrid'); const mGrid = document.getElementById('monthGrid');
@@ -190,7 +192,7 @@
         renderList();
     }
 
-    // --- 리스트 및 모달 함수 (기존 로직 유지) ---
+    // --- 하단 리스트 UI 컴팩트 최적화 ---
     function renderList() {
         const list = document.getElementById('masterTaskList'); list.innerHTML = '';
         tasks.sort((a,b)=>new Date(a.date)-new Date(b.date)).forEach(t => {
@@ -201,9 +203,43 @@
                 else status = { label: '진행 중', class: 'bg-yellow' };
             }
             const div = document.createElement('div'); div.className = 'task-card'; div.onclick = () => showModal(t.id);
-            div.innerHTML = `<div style="display:flex; justify-content:space-between; align-items:center;"><div><button class="status-btn ${status.class}">${status.label}</button> <span style="font-weight:bold; font-size:18px; margin-left:10px;">${t.title}</span></div><span style="color:#8b95a1; font-size:13px;">📅 ${t.date} | 👤 ${t.partner}</span></div>`;
+            
+            // 한 줄에 촘촘하게 정보 배치
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <button class="status-btn ${status.class}">${status.label}</button>
+                        <span style="font-weight:bold; font-size:15px; color:#191f28;">${t.title}</span>
+                    </div>
+                    <span style="color:#8b95a1; font-size:12px;">📅 ${t.date.slice(5)} | 👤 ${t.partner || '미지정'}</span>
+                </div>
+                <div style="display:flex; flex-wrap:wrap; gap:4px;">
+                    ${t.todos ? t.todos.map(todo => `<span class="todo-badge">${todo.text}(${todo.status})</span>`).join('') : ''}
+                </div>
+            `;
             list.appendChild(div);
         });
+    }
+
+    function initDragEvents() {
+        const container = document.getElementById('todoListContainer');
+        container.addEventListener('dragover', e => {
+            e.preventDefault();
+            const dragging = document.querySelector('.dragging');
+            const afterElement = getDragAfterElement(container, e.clientY);
+            if (afterElement == null) container.appendChild(dragging);
+            else container.insertBefore(dragging, afterElement);
+        });
+    }
+
+    function getDragAfterElement(container, y) {
+        const elements = [...container.querySelectorAll('.todo-item:not(.dragging)')];
+        return elements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+            else return closest;
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
     function showModal(id = null) {
@@ -235,7 +271,7 @@
         let dateHistory = currentTask ? (currentTask.dateHistory || []) : [];
         if (currentTask && currentTask.date !== date) {
             const now = new Date();
-            dateHistory.push({ from: currentTask.date, to: date, time: `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}` });
+            dateHistory.push({ from: currentTask.date, to: date, time: `${now.getMonth()+1}/${now.getDate()} ${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')} (수정)` });
         }
         const newTask = { id: editingId || Date.now(), title, date, partner: document.getElementById('mPartner').value, todos, dateHistory };
         if(editingId) tasks = tasks.map(t => t.id === editingId ? newTask : t);
@@ -247,11 +283,16 @@
     function addTodoRow(text = '', status = '시작전') {
         const div = document.createElement('div');
         div.className = 'todo-item';
-        div.innerHTML = `<span style="color:#adb5bd;">☰</span><input type="text" class="t-text" value="${text}" placeholder="할 일" style="flex:1"><select class="t-status">${['시작전','검토','보고','완료','보완'].map(s => `<option ${s===status?'selected':''}>${s}</option>`).join('')}</select><button onclick="this.parentElement.remove()" style="border:none; background:#ff4d4f; color:white; border-radius:6px; cursor:pointer;">-</button>`;
+        div.draggable = true;
+        div.innerHTML = `<span style="color:#adb5bd; cursor:grab;">☰</span><input type="text" class="t-text" value="${text}" placeholder="할 일" style="flex:1"><select class="t-status">${['시작전','검토','보고','완료','보완'].map(s => `<option ${s===status?'selected':''}>${s}</option>`).join('')}</select><button onclick="this.parentElement.remove()" style="border:none; background:#ff4d4f; color:white; border-radius:6px; cursor:pointer;">-</button>`;
+        div.addEventListener('dragstart', () => div.classList.add('dragging'));
+        div.addEventListener('dragend', () => div.classList.remove('dragging'));
         document.getElementById('todoListContainer').appendChild(div);
     }
 
     function closeModal() { document.getElementById('taskModal').style.display = 'none'; }
+    
+    initDragEvents();
     render();
 </script>
 </body>
